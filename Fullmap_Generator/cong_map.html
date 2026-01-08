@@ -16,7 +16,6 @@ html, body {
 }
 </style>
 
-<!-- Google Maps API（callbackなし） -->
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBlkqCeYEheeLNZ-jEODKfVfznTbo-8jZE"></script>
 </head>
 
@@ -24,57 +23,136 @@ html, body {
 <div id="map"></div>
 
 <script>
-/* =========================
+/* ==================================================
+   ★ 設定エリア（将来ここだけ変更）
+================================================== */
+const CONFIG = {
+  fullmap: {
+    strokeColor: "#8b5a2b",   // 大地図 枠線色（茶）
+    strokeWeight: 2           // 線幅
+  },
+  smallmap: {
+    strokeColor: "#0288d1",   // 小地図 枠線色（青）
+    strokeWeight: 2.5         // 線幅
+  },
+  label: {
+    color: "#0288d1",         // 番号の色
+    baseSize: 12,             // 最小フォントサイズ(px)
+    zoomFactor: 1.2           // ズーム連動倍率
+  }
+};
+
+/* ==================================================
    1. マップ初期化
-========================= */
+================================================== */
 const map = new google.maps.Map(document.getElementById("map"), {
-  center: { lat: 43.77, lng: 142.42 }, // 旭川
+  center: { lat: 43.77, lng: 142.42 },
   zoom: 13,
   mapTypeId: "roadmap"
 });
 
-/* =========================
-   2. Polygon スタイル
-========================= */
-map.data.setStyle({
-  fillOpacity: 0.05,
-  strokeWeight: 2,
-  strokeColor: "#555555"
+/* ==================================================
+   2. Polygon スタイル制御
+================================================== */
+map.data.setStyle(feature => {
+  const name = feature.getProperty("name");
+
+  // 大地図
+  if (name === "区域境界線") {
+    return {
+      fillOpacity: 0,
+      strokeColor: CONFIG.fullmap.strokeColor,
+      strokeWeight: CONFIG.fullmap.strokeWeight
+    };
+  }
+
+  // 小地図
+  return {
+    fillOpacity: 0,
+    strokeColor: CONFIG.smallmap.strokeColor,
+    strokeWeight: CONFIG.smallmap.strokeWeight
+  };
 });
 
-/* =========================
+/* ==================================================
    3. GeoJSON 読み込み
-========================= */
+================================================== */
+const numberMarkers = [];
+
 map.data.loadGeoJson(
   "https://Tyubetsu-Maps.github.io/google-my-maps/Fullmap_Generator/maps.geojson",
   null,
-  function(features) {
+  features => {
 
     console.log("GeoJSON features:", features.length);
 
     const bounds = new google.maps.LatLngBounds();
 
-    map.data.forEach(function(feature) {
+    map.data.forEach(feature => {
       const geom = feature.getGeometry();
+      const name = feature.getProperty("name");
 
+      // Polygon の範囲取得（表示範囲用）
       if (geom.getType() === "Polygon") {
-        geom.getArray()[0].getArray().forEach(function(latlng) {
+        geom.getArray()[0].getArray().forEach(latlng => {
           bounds.extend(latlng);
         });
       }
 
-      if (geom.getType() === "MultiPolygon") {
-        geom.getArray().forEach(function(polygon) {
-          polygon.getArray()[0].getArray().forEach(function(latlng) {
-            bounds.extend(latlng);
-          });
+      // 番号付き小地図のみラベル生成
+      if (geom.getType() === "Polygon" && name && name !== "区域境界線") {
+
+        const polyBounds = new google.maps.LatLngBounds();
+        geom.getArray()[0].getArray().forEach(latlng => {
+          polyBounds.extend(latlng);
         });
+
+        const marker = new google.maps.Marker({
+          position: polyBounds.getCenter(),
+          map,
+          label: {
+            text: name.replace(/^No\./, ""),
+            color: CONFIG.label.color,
+            fontWeight: "bold",
+            fontSize: CONFIG.label.baseSize + "px"
+          },
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 0
+          }
+        });
+
+        numberMarkers.push(marker);
       }
     });
 
     map.fitBounds(bounds);
+    updateLabelSize();
   }
 );
+
+/* ==================================================
+   4. ズーム連動ラベルサイズ
+================================================== */
+function updateLabelSize() {
+  const zoom = map.getZoom();
+  const size = Math.max(
+    CONFIG.label.baseSize,
+    zoom * CONFIG.label.zoomFactor
+  );
+
+  numberMarkers.forEach(marker => {
+    const text = marker.getLabel().text;
+    marker.setLabel({
+      text,
+      color: CONFIG.label.color,
+      fontWeight: "bold",
+      fontSize: size + "px"
+    });
+  });
+}
+
+map.addListener("zoom_changed", updateLabelSize);
 </script>
 
 </body>
