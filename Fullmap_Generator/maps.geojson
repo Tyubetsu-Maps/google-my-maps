@@ -1,0 +1,5 @@
+{"type":"FeatureCollection", "features": [
+{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[142.4131289,43.7722942],[142.4104681,43.7458238],[142.4528685,43.7435915],[142.4553576,43.770001],[142.4152746,43.7721702],[142.4131289,43.7722942]]]},"properties":{"name":"区域境界線","styleUrl":"#poly-000000-1200-0-nodesc","fill-opacity":0,"fill":"#000000","stroke-opacity":1,"stroke":"#000000","stroke-width":1.2}},
+{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[142.4197559,43.7572181],[142.4194233,43.75425],[142.4242513,43.7540176],[142.4245302,43.7566524],[142.4234788,43.7570088],[142.4197559,43.7572181]]]},"properties":{"name":"No.1","styleUrl":"#poly-0288D1-2401-0-nodesc","fill-opacity":0,"fill":"#0288d1","stroke-opacity":1,"stroke":"#0288d1","stroke-width":2.401}},
+{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[142.4245302,43.7566524],[142.4248092,43.7595118],[142.4199597,43.7597752],[142.4197559,43.7572181],[142.4234788,43.7570088],[142.4245302,43.7566524]]]},"properties":{"name":"2","styleUrl":"#poly-0288D1-2401-0-nodesc","fill-opacity":0,"fill":"#0288d1","stroke-opacity":1,"stroke":"#0288d1","stroke-width":2.401}}
+]}
