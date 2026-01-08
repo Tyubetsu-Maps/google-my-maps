@@ -37,6 +37,7 @@ const map = new google.maps.Map(document.getElementById("map"), {
    2. GeoJSON 読み込み
 ========================= */
 map.data.loadGeoJson("https://Tyubetsu-Maps.github.io/google-my-maps/Fullmap_Generator/maps.geojson", null, () => {
+	console.log("GeoJSON loaded");
 
   // GeoJSON 読み込み完了後に実行される
 
