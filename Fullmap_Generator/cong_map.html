@@ -3,25 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <title>区域地図</title>
 
 <style>
-  html, body {
-    height: 100%;
-    margin: 0;
-  }
-  #map {
-    width: 100%;
-    height: 100%;
-  }
+html, body {
+  height: 100%;
+  margin: 0;
+}
+#map {
+  width: 100%;
+  height: 100%;
+}
 </style>
 
-<!-- Google Maps API -->
 <script
   src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBlkqCeYEheeLNZ-jEODKfVfznTbo-8jZE&callback=initMap"
-  async
-  defer>
+  async defer>
 </script>
 </head>
 
@@ -31,65 +28,5 @@
 <script>
 function initMap() {
 
-  /* =========================
-     1. マップ初期化
-  ========================= */
   const map = new google.maps.Map(document.getElementById("map"), {
-    center: { lat: 43.77, lng: 142.42 }, // 旭川（仮）
-    zoom: 13,
-    mapTypeId: "roadmap"
-  });
-
-  /* =========================
-     2. Polygon のスタイル
-  ========================= */
-  map.data.setStyle(function(feature) {
-    return {
-      fillOpacity: 0.05,
-      strokeWeight: 2,
-      strokeColor: "#555555"
-    };
-  });
-
-  /* =========================
-     3. GeoJSON 読み込み
-  ========================= */
-  map.data.loadGeoJson(
-    "https://Tyubetsu-Maps.github.io/google-my-maps/Fullmap_Generator/maps.geojson",
-    null,
-    function(features) {
-
-      console.log("GeoJSON features:", features.length);
-
-      /* =========================
-         4. 表示範囲を自動調整
-      ========================= */
-      const bounds = new google.maps.LatLngBounds();
-
-      map.data.forEach(function(feature) {
-        const geom = feature.getGeometry();
-
-        if (geom.getType() === "Polygon") {
-          // 外周リングのみ使用
-          geom.getArray()[0].getArray().forEach(function(latlng) {
-            bounds.extend(latlng);
-          });
-        }
-
-        if (geom.getType() === "MultiPolygon") {
-          geom.getArray().forEach(function(polygon) {
-            polygon.getArray()[0].getArray().forEach(function(latlng) {
-              bounds.extend(latlng);
-            });
-          });
-        }
-      });
-
-      map.fitBounds(bounds);
-    }
-  );
-}
-</script>
-
-</body>
-</html>
+    center: { lat: 43.77, lng: 142.42 },
