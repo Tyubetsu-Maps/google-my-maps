@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>区域地図</title>
+
+<style>
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+  #map {
+    width: 100%;
+    height: 100%;
+  }
+</style>
+
+<!-- Google Maps JavaScript API -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBlkqCeYEheeLNZ-jEODKfVfznTbo-8jZE"></script>
+</head>
+
+<body>
+<div id="map"></div>
+
+<script>
+/* =========================
+   1. マップ初期化
+========================= */
+const map = new google.maps.Map(document.getElementById("map"), {
+  center: { lat: 43.5, lng: 142.8 }, // ← fullmap の中心に調整
+  zoom: 10,
+  mapTypeId: "roadmap"
+});
+
+/* =========================
+   2. GeoJSON 読み込み
+========================= */
+map.data.loadGeoJson("maps.geojson");
+
+/* =========================
+   3. Point を非表示 / Polygon を表示
+========================= */
+map.data.setStyle(feature => {
+  const type = feature.getGeometry().getType();
+
+  if (type === "Point") {
+    return { visible: false };
+  }
+
+  return {
+    fillOpacity: 0.05,
+    strokeWeight: 2,
+    strokeColor: "#555555"
+  };
+});
+
+/* =========================
+   4. Polygon から番号マーカー生成
+========================= */
+const numberMarkers = [];
+
+map.data.addListener("addfeature", e => {
+  const feature = e.feature;
+
+  // Polygon のみ対象
+  if (feature.getGeometry().getType() !== "Polygon") return;
+
+  // My Maps の「名前」に入れた番号
+  const number = feature.getProperty("name");
+  if (!number) return;
+
+  // Polygon の中心を計算（簡易）
+  const bounds = new google.maps.LatLngBounds();
+  feature.getGeometry().getArray()[0].forEach(latlng => {
+    bounds.extend(latlng);
+  });
+
+  const marker = new google.maps.Marker({
+    position: bounds.getCenter(),
+    map: map,
+    label: {
+      text: String(number),
+      fontWeight: "bold"
+    },
+    icon: {
+      path: google.maps.SymbolPath.CIRCLE,
+      scale: 0   // ピンは表示しない
+    }
+  });
+
+  numberMarkers.push(marker);
+});
+
+/* =========================
+   5. ズーム連動で文字サイズ変更
+========================= */
+function updateLabelSize() {
+  const zoom = map.getZoom();
+
+  // ズームと文字サイズの関係（必要なら調整）
+  const size = Math.max(zoom + 2, 10);
+
+  numberMarkers.forEach(marker => {
+    const label = marker.getLabel();
+    marker.setLabel({
+      text: label.text,
+      fontSize: size + "px",
+      fontWeight: "bold"
+    });
+  });
+}
+
+// ズーム時に更新
+map.addListener("zoom_changed", updateLabelSize);
+
+// 初回表示時にも反映
+google.maps.event.addListenerOnce(map, "idle", updateLabelSize);
+</script>
+
+</body>
+</html>
