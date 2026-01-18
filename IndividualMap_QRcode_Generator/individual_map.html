@@ -1,134 +1,140 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8">
-  <title>Area Map</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
+<title>Individual Area Map</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-    }
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  font-family: sans-serif;
+}
 
-    /* パスワード画面 */
-    #passwordDiv {
-      position: fixed;
-      inset: 0;
-      background: rgba(255,255,255,0.95);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      z-index: 2000;
-      padding: 20px;
-      box-sizing: border-box;
-    }
+/* iframe（地図） */
+#mapFrame {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
 
-    #passwordDiv h2 {
-      font-size: 1.2em;
-      margin-bottom: 1em;
-    }
+/* パスワード画面 */
+#passwordDiv {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(255,255,255,0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  z-index: 3000;
+  padding: 20px;
+}
 
-    #passwordInput, #submitBtn {
-      width: 90%;
-      max-width: 400px;
-      font-size: 1.2em;
-      padding: 1em;
-      box-sizing: border-box;
-    }
+#passwordDiv h2 {
+  font-size: 1.5em;
+  margin-bottom: 1em;
+}
 
-    #submitBtn {
-      margin-top: 0.8em;
-      border-radius: 8px;
-      border: none;
-      background: #4285F4;
-      color: #fff;
-    }
+#passwordInput {
+  width: 90%;
+  max-width: 360px;
+  padding: 0.9em;
+  font-size: 1.1em;
+  border-radius: 8px;
+  border: 1px solid #aaa;
+  box-sizing: border-box;
+}
 
-    #msg {
-      margin-top: 0.6em;
-      color: red;
-    }
+#submitBtn {
+  width: 90%;
+  max-width: 360px;
+  margin-top: 0.8em;
+  padding: 0.9em;
+  font-size: 1.1em;
+  border-radius: 8px;
+  border: none;
+  background: #4285F4;
+  color: #fff;
+}
 
-    /* 地図 */
-    #mapContainer {
-      width: 100vw;
-      height: 100vh;
-      display: none;
-    }
+#msg {
+  margin-top: 0.6em;
+  color: red;
+}
 
-    #mapFrame {
-      width: 100%;
-      height: 100%;
-      border: 0;
-    }
-
-    /* 説明オーバーレイ（数秒で消える） */
-    #hint {
-      position: fixed;
-      top: 12px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0,0,0,0.6);
-      color: #fff;
-      padding: 8px 14px;
-      border-radius: 20px;
-      font-size: 0.9em;
-      z-index: 1500;
-      pointer-events: none;
-    }
-  </style>
+/* 表示リセットボタン（控えめ） */
+#resetBtn {
+  position: fixed;
+  bottom: 12px;
+  right: 12px;
+  z-index: 2000;
+  padding: 6px 10px;
+  font-size: 12px;
+  border-radius: 6px;
+  border: 1px solid #999;
+  background: rgba(255,255,255,0.85);
+}
+</style>
 </head>
 
 <body>
 
+<!-- パスワード画面 -->
 <div id="passwordDiv">
   <h2>パスワードを入力してください</h2>
   <input type="password" id="passwordInput" placeholder="パスワード">
   <button id="submitBtn">表示</button>
-  <p id="msg"></p>
+  <div id="msg"></div>
 </div>
 
-<div id="mapContainer">
-  <div id="hint">地図を操作してください</div>
-  <iframe id="mapFrame" loading="lazy"></iframe>
-</div>
+<!-- My Maps iframe -->
+<iframe id="mapFrame"></iframe>
+
+<!-- 表示リセット -->
+<button id="resetBtn">表示をリセット</button>
 
 <script>
-  const correctPassword = "1914";
+const correctPassword = "1914";
 
-  document.getElementById("submitBtn").onclick = () => {
-    const input = document.getElementById("passwordInput").value;
-    const msg = document.getElementById("msg");
+const passwordDiv   = document.getElementById("passwordDiv");
+const passwordInput = document.getElementById("passwordInput");
+const submitBtn     = document.getElementById("submitBtn");
+const msg           = document.getElementById("msg");
 
-    if (input !== correctPassword) {
-      msg.textContent = "パスワードが違います。";
-      return;
-    }
+const mapFrame = document.getElementById("mapFrame");
+const resetBtn = document.getElementById("resetBtn");
 
-    const mid = new URLSearchParams(location.search).get("mid");
-    if (!mid) {
-      msg.textContent = "地図IDがありません。";
-      return;
-    }
+// URLパラメータから mid を取得
+const params = new URLSearchParams(window.location.search);
+const mid = params.get("mid");
 
-    // embed + 日本語指定（UI安定）
-    document.getElementById("mapFrame").src =
-      "https://www.google.com/maps/d/embed?mid=" + encodeURIComponent(mid) + "&hl=ja";
+// iframe 用 URL（embed）
+const embedUrl = mid
+  ? "https://www.google.com/maps/d/embed?mid=" + mid
+  : "";
 
-    document.getElementById("passwordDiv").style.display = "none";
-    document.getElementById("mapContainer").style.display = "block";
+// パスワード判定
+submitBtn.onclick = () => {
+  if (passwordInput.value === correctPassword) {
+    passwordDiv.style.display = "none";
+    mapFrame.src = embedUrl;
+  } else {
+    msg.textContent = "パスワードが違います。";
+  }
+};
 
-    // ヒントを数秒で消す
-    setTimeout(() => {
-      const hint = document.getElementById("hint");
-      if (hint) hint.style.display = "none";
-    }, 4000);
-  };
+// 表示リセット（iframe再読み込み）
+const originalSrc = embedUrl;
+resetBtn.onclick = () => {
+  mapFrame.src = "";
+  setTimeout(() => {
+    mapFrame.src = originalSrc;
+  }, 100);
+};
 </script>
 
 </body>
